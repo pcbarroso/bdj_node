@@ -6,6 +6,7 @@ const connectionString = process.env.DATABASE_URL || 'postgres://postgres:admin@
 const async = require('async');
 
 var Game = require('../bean/Game');
+var System = require('../bean/System');
 var systemDao = require('./system');
 
 function getGames(id, callback) {
@@ -137,11 +138,11 @@ function getRelatedSystems(code,callback) {
       callback(err);
     }
     
-    var query = client.query('SELECT s.name FROM game_has_system as gs, system as s WHERE gs.game_code = ($1) and s.code = gs.system_code ORDER BY s.name ASC;', [code]);
+    var query = client.query('SELECT s.code, s.name FROM game_has_system as gs, system as s WHERE gs.game_code = ($1) and s.code = gs.system_code ORDER BY s.name ASC;', [code]);
      
     // Stream results back one row at a time
     query.on('row', (row) => {
-      results.push(row);
+      results.push(new System(row.code,row.name));
     });
     // After all data is returned, close connection and return results
     query.on('end', () => {

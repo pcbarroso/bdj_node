@@ -4,6 +4,7 @@ const pg = require('pg');
 const path = require('path');
 const connectionString = process.env.DATABASE_URL || 'postgres://postgres:admin@localhost:5432/baudosjogos';
 
+var System = require('../bean/System');
 
 function getSystems(id, callback) {
   const results = [];

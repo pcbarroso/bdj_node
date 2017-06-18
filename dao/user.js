@@ -64,8 +64,10 @@ getUserGames = function(id, callback) {
       var tasks = []
       results.forEach(function(row){
         tasks.push(function(callback) {
+            var userGame = {'system_code':row.system_code,'qtd':row.qtd}
             gameDao.getGames(row.game_code,function(game) {
-                newRes.push(game);
+                userGame.game = game;
+                newRes.push(userGame);
                 callback(null,game)
             })
         }
