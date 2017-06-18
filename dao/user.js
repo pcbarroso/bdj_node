@@ -3,6 +3,9 @@ const router = express.Router();
 const pg = require('pg');
 const path = require('path');
 const connectionString = process.env.DATABASE_URL || 'postgres://postgres:admin@localhost:5432/baudosjogos';
+const async = require('async');
+
+var gameDao = require('./game');
 
 getUsers = function(id, callback) {
   const results = [];
@@ -35,6 +38,50 @@ getUsers = function(id, callback) {
     });
   });
 }
+
+getUserGames = function(id, callback) {
+  const results = [];
+  // Get a Postgres client from the connection pool
+  pg.connect(connectionString, (err, client, done) => {
+    // Handle connection errors
+    if(err) {
+      done();
+      console.log(err);
+      var err = new Error(err);
+      callback(err);
+    }
+    // SQL Query > Select Data
+    var query = client.query('SELECT * FROM users_has_game WHERE user_code = ($1) ORDER BY game_code ASC;',[id]);
+
+    // Stream results back one row at a time
+    query.on('row', (row) => {
+      results.push(row);
+    });
+    // After all data is returned, close connection and return results
+    query.on('end', () => {
+      done();
+      var newRes = [];
+      var tasks = []
+      results.forEach(function(row){
+        tasks.push(function(callback) {
+            gameDao.getGames(row.game_code,function(game) {
+                newRes.push(game);
+                callback(null,game)
+            })
+        }
+      )});
+      
+     async.parallel(tasks, function(err, result) {
+        /* this code will run after all calls finished the job or
+       when any of the calls passes an error */
+        if (err)
+            return console.log(err);
+        callback(newRes);
+     });
+    });
+  });
+}
+
 
 getUserByMail = function(mail, callback) {
   const results = [];
@@ -138,6 +185,7 @@ deleteUser = function(id,callback) {
 }
 
 module.exports.getUsers = getUsers;
+module.exports.getUserGames = getUserGames;
 module.exports.insertUser = insertUser;
 module.exports.updateUser = updateUser;
 module.exports.deleteUser = deleteUser;

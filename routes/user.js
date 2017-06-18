@@ -35,6 +35,21 @@ router.get('/user/:user_id', (req, res, next) => {
     }
 });
 
+router.get('/userGames/:user_id', (req, res, next) => {
+    const id = req.params.user_id;
+    try {
+        userDao.getUserGames(id,function(results){
+            if(results instanceof Error) {
+                 return res.status(500).json({success: false, data: results.toString()});    
+            } else {
+                return res.json(results);
+            }
+        })
+    } catch (err) {
+         return res.status(500).json({success: false, data: err.toString()});    
+    }
+});
+
 router.post('/users', (req, res, next) => {
   const data = {mail: req.body.mail,
                name:req.body.name,
